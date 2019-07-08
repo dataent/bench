@@ -1,0 +1,29 @@
+---
+
+  - hosts: localhost
+    become: yes
+    become_user: root
+    tasks:
+    - name: Create user
+      user:
+        name: '{{ dataent_user }}'
+        generate_ssh_key: yes
+
+    - name: Set home folder perms
+      file:
+        path: '/home/{{ dataent_user }}'
+        mode: 'o+rx'
+        owner: '{{ dataent_user }}'
+        group: '{{ dataent_user }}'
+        recurse: yes
+
+    - name: Set /tmp/.bench folder perms
+      file:
+        path: '{{ repo_path }}'
+        owner: '{{ dataent_user }}'
+        group: '{{ dataent_user }}'
+        recurse: yes
+
+    - name: Change default shell to bash
+      shell: "chsh {{ dataent_user }} -s $(which bash)"
+...

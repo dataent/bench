@@ -1,0 +1,28 @@
+---
+  - name: Check if EPAAS App exists
+    stat: path="{{ bench_path }}/apps/epaas"
+    register: app
+
+  - name: Get the EPAAS app
+    command: bench get-app epaas {{ epaas_repo_url }} --branch {{ epaas_branch }}
+    args:
+      creates: "{{ bench_path }}/apps/epaas"
+      chdir: "{{ bench_path }}"
+    when: not app.stat.exists and not without_epaas
+
+  - name: Check whether the site already exists
+    stat: path="{{ bench_path }}/sites/{{ site }}"
+    register: site_folder
+
+  - name: Create a new site
+    command: "bench new-site {{ site }} --admin-password '{{ admin_password }}' --mariadb-root-password '{{ mysql_root_password }}'"
+    args:
+      chdir: "{{ bench_path }}"
+    when: not site_folder.stat.exists
+
+  - name: Install EPAAS to default site
+    command: "bench --site {{ site }} install-app epaas"
+    args:
+      chdir: "{{ bench_path }}"
+    when: not without_epaas
+...

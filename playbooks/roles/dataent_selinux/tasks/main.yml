@@ -1,0 +1,24 @@
+---
+- name: Install deps
+  yum: name="{{item}}" state=present
+  with_items:
+    - policycoreutils-python
+    - selinux-policy-devel
+  when: ansible_distribution == 'CentOS'
+
+- name: Check enabled SELinux modules
+  shell: semanage module -l
+  register: enabled_modules
+  when: ansible_distribution == 'CentOS'
+
+- name: Copy dataent_selinux policy
+  copy: src=dataent_selinux.te dest=/root/dataent_selinux.te
+  register: dest_dataent_selinux_te
+  when: ansible_distribution == 'CentOS'
+
+- name: Compile dataent_selinux policy
+  shell: "make -f /usr/share/selinux/devel/Makefile dataent_selinux.pp && semodule -i dataent_selinux.pp"
+  args:
+    chdir: /root/
+  when: "ansible_distribution == 'CentOS' and enabled_modules.stdout.find('dataent_selinux') == -1 or dest_dataent_selinux_te.changed"
+...
